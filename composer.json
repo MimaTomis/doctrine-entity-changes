@@ -1,0 +1,29 @@
+{
+  "name": "mima/doctrine-entity-changes",
+  "description": "Libraries for collecting all changes in doctrine entities and relations",
+  "keywords": ["doctrine", "orm", "entity", "changes", "changeset"],
+  "require": {
+    "php": ">=7.1",
+    "doctrine/orm": "2.*"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^7"
+  },
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Dmitriy Konev",
+      "email": "dnkonev@yandex.ru"
+    }
+  ],
+  "autoload": {
+    "psr-4": {
+      "Doctrine\\ORM\\ChangeSet\\": "src/ChangeSet"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Doctrine\\Tests\\ChangeSet\\": "tests/ChangeSet"
+    }
+  }
+}
