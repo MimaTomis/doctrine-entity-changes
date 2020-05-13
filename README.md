@@ -1,6 +1,29 @@
 # Doctrine Entity Changes
 
+[![Build Status](https://travis-ci.org/MimaTomis/doctrine-entity-changes.svg)](https://travis-ci.org/MimaTomis/doctrine-entity-changes)
+
 Library makes it easy to get changes of Doctrine entities.
+
+* [Installation](#installation)
+* [How to use](#how-to-use)
+
+## Installation
+
+Run command:
+
+```bash
+composer require mima/doctrine-entity-changes
+```
+
+Add dependency to your composer.json:
+
+```json
+{
+    "require": {
+        "mima/doctrine-entity-changes": "~1.0"
+    }
+}
+```
 
 ## How to use
 
