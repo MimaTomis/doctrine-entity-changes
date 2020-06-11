@@ -48,4 +48,12 @@ abstract class AbstractField implements FieldVisitorAcceptingInterface
 
         return $this;
     }
+
+    /**
+     * @return string
+     */
+    public function getNamespace(): string
+    {
+        return $this->namespace;
+    }
 }

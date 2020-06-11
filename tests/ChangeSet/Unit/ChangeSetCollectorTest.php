@@ -341,8 +341,8 @@ class ChangeSetCollectorTest extends TestCase
                 $this->logicalAnd(
                     $this->isInstanceOf(EntityField::class),
                     $this->callback(function (EntityField $field) {
-                        return $field->getOldIdentifier('id') === null
-                            && (int) $field->getNewIdentifier('id') === 111
+                        return $field->getOldIdentifier() === null
+                            && (int) $field->getNewIdentifier()->getValue('id') === 111
                             && $field->getName() === 'dEntity';
                     })
                 )

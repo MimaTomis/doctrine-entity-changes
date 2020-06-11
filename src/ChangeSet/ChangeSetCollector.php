@@ -5,6 +5,7 @@ namespace Doctrine\ORM\ChangeSet;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Util\ClassUtils;
+use Doctrine\ORM\ChangeSet\EntityIdentifier;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Mapping\ClassMetadata;
 use Doctrine\ORM\Mapping\MappingException;
@@ -399,10 +400,10 @@ class ChangeSetCollector
                     $fieldName,
                     $targetClass,
                     $oldValue !== null ?
-                        $entityMetadata->getIdentifierValues($oldValue) :
+                        new EntityIdentifier($entityMetadata->getIdentifierValues($oldValue)) :
                         null,
                     $newValue !== null ?
-                        $entityMetadata->getIdentifierValues($newValue) :
+                        new EntityIdentifier($entityMetadata->getIdentifierValues($newValue)) :
                         null
                 );
                 break;

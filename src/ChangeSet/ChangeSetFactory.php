@@ -38,12 +38,12 @@ class ChangeSetFactory implements ChangeSetFactoryInterface
     public function createChangeSet($entity, string $namespace): ChangeSet
     {
         $className = ClassUtils::getClass($entity);
-        $identifiers = $this->unitOfWork->isInIdentityMap($entity) ?
-                       $this->unitOfWork->getEntityIdentifier($entity) : [];
+        $identifier = $this->unitOfWork->isInIdentityMap($entity) ?
+                      new EntityIdentifier($this->unitOfWork->getEntityIdentifier($entity)) : null;
 
         return new ChangeSet(
             $className,
-            $identifiers,
+            $identifier,
             $namespace
         );
     }

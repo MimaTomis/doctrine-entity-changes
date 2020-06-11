@@ -8,6 +8,7 @@ use Doctrine\ORM\ChangeSet\Exception\InvalidChangeSetException;
 use Doctrine\ORM\ChangeSet\Field\BooleanField;
 use Doctrine\ORM\ChangeSet\Field\DateField;
 use Doctrine\ORM\ChangeSet\Field\EntityField;
+use Doctrine\ORM\ChangeSet\EntityIdentifier;
 use Doctrine\ORM\ChangeSet\Field\FloatField;
 use Doctrine\ORM\ChangeSet\Field\IntegerField;
 use Doctrine\ORM\ChangeSet\Field\StringField;
@@ -29,7 +30,7 @@ class ChangeSetTest extends TestCase
      */
     public function testIterateCurrentChangeSetFields(AbstractField ...$fields): void
     {
-        $changeSet = new ChangeSet('EntityA', ['id' => 1]);
+        $changeSet = new ChangeSet('EntityA', new EntityIdentifier(['id' => 1]));
 
         foreach ($fields as $field) {
             $changeSet->addField($field);
@@ -55,7 +56,7 @@ class ChangeSetTest extends TestCase
      */
     public function testFindConcreteFieldInCurrentChangeSet(AbstractField ...$fields): void
     {
-        $changeSet = new ChangeSet('EntityA', ['id' => 1]);
+        $changeSet = new ChangeSet('EntityA', new EntityIdentifier(['id' => 1]));
 
         foreach ($fields as $field) {
             $changeSet->addField($field);
@@ -80,8 +81,8 @@ class ChangeSetTest extends TestCase
      */
     public function testFindFieldsInRelatedChangeSetFirstLevel(AbstractField ...$fields): void
     {
-        $changeSet = new ChangeSet('EntityA', ['id' => 1]);
-        $relatedChangeSet = new ChangeSet('EntityB', ['id' => null], 'bCollection');
+        $changeSet = new ChangeSet('EntityA', new EntityIdentifier(['id' => 1]));
+        $relatedChangeSet = new ChangeSet('EntityB', new EntityIdentifier(['id' => null]), 'bCollection');
 
         $changeSet->addRelatedChangeSet($relatedChangeSet);
 
@@ -110,8 +111,8 @@ class ChangeSetTest extends TestCase
      */
     public function testFindConcreteFieldInRelatedChangeSetFirstLevel(AbstractField ...$fields): void
     {
-        $changeSet = new ChangeSet('EntityA', ['id' => 1]);
-        $relatedChangeSet = new ChangeSet('EntityB', ['id' => null], 'bCollection');
+        $changeSet = new ChangeSet('EntityA', new EntityIdentifier(['id' => 1]));
+        $relatedChangeSet = new ChangeSet('EntityB', new EntityIdentifier(['id' => null]), 'bCollection');
 
         $changeSet->addRelatedChangeSet($relatedChangeSet);
 
@@ -138,9 +139,9 @@ class ChangeSetTest extends TestCase
      */
     public function testFindFieldsInRelatedChangeSetSecondLevel(AbstractField ...$fields): void
     {
-        $changeSet = new ChangeSet('EntityA', ['id' => 1]);
-        $relatedChangeSet = new ChangeSet('EntityB', ['id' => null], 'bCollection');
-        $subRelatedChangeSet = new ChangeSet('EntityC', ['id' => null], 'bCollection.cCollection');
+        $changeSet = new ChangeSet('EntityA', new EntityIdentifier(['id' => 1]));
+        $relatedChangeSet = new ChangeSet('EntityB', new EntityIdentifier(['id' => null]), 'bCollection');
+        $subRelatedChangeSet = new ChangeSet('EntityC', new EntityIdentifier(['id' => null]), 'bCollection.cCollection');
 
         $changeSet->addRelatedChangeSet($relatedChangeSet);
         $relatedChangeSet->addRelatedChangeSet($subRelatedChangeSet);
@@ -170,9 +171,9 @@ class ChangeSetTest extends TestCase
      */
     public function testFindConcreteFieldInRelatedChangeSetSecondLevel(AbstractField ...$fields): void
     {
-        $changeSet = new ChangeSet('EntityA', ['id' => 1]);
-        $relatedChangeSet = new ChangeSet('EntityB', ['id' => null], 'bCollection');
-        $subRelatedChangeSet = new ChangeSet('EntityC', ['id' => null], 'bCollection.cCollection');
+        $changeSet = new ChangeSet('EntityA', new EntityIdentifier(['id' => 1]));
+        $relatedChangeSet = new ChangeSet('EntityB', new EntityIdentifier(['id' => null]), 'bCollection');
+        $subRelatedChangeSet = new ChangeSet('EntityC', new EntityIdentifier(['id' => null]), 'bCollection.cCollection');
 
         $changeSet->addRelatedChangeSet($relatedChangeSet);
         $relatedChangeSet->addRelatedChangeSet($subRelatedChangeSet);
@@ -200,8 +201,8 @@ class ChangeSetTest extends TestCase
      */
     public function testExceptionWithInvalidRelatedChangeSet(): void
     {
-        $changeSet = new ChangeSet('EntityA', ['id' => 1]);
-        $changeSet->addRelatedChangeSet(new ChangeSet('EntityB', ['id' => null]));
+        $changeSet = new ChangeSet('EntityA', new EntityIdentifier(['id' => 1]));
+        $changeSet->addRelatedChangeSet(new ChangeSet('EntityB', new EntityIdentifier(['id' => null])));
     }
 
     /**
@@ -221,7 +222,7 @@ class ChangeSetTest extends TestCase
                 new StringField('field5', 3, 5),
             ],
             [
-                new EntityField('field6', 'Client', ['id' => 1], ['id' => 2]),
+                new EntityField('field6', 'Client', new EntityIdentifier(['id' => 1]), new EntityIdentifier(['id' => 2])),
                 new BooleanField('field7', false, true),
             ]
         ];

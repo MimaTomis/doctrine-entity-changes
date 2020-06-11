@@ -3,6 +3,7 @@
 namespace Doctrine\Tests\ChangeSet\Unit;
 
 use Doctrine\ORM\ChangeSet\ChangeSet;
+use Doctrine\ORM\ChangeSet\EntityIdentifier;
 use Doctrine\ORM\ChangeSet\Field\BooleanField;
 use Doctrine\ORM\ChangeSet\Field\DateField;
 use Doctrine\ORM\ChangeSet\Field\IntegerField;
@@ -43,7 +44,7 @@ class AbstractCommonFieldVisitorTest extends TestCase
                 )
             );
 
-        $changeSet = new ChangeSet(EntityA::class, []);
+        $changeSet = new ChangeSet(EntityA::class, null);
         $changeSet->addField(new DateField('date', DateField::TYPE_DATE, null, new \DateTime()));
         $changeSet->addField(new StringField('string', null, 'STRING'));
         $changeSet->addField(new IntegerField('integer', null, 1));
@@ -72,7 +73,7 @@ class AbstractCommonFieldVisitorTest extends TestCase
                 )
             );
 
-        $changeSet = new ChangeSet(EntityA::class, []);
+        $changeSet = new ChangeSet(EntityA::class, null);
         $changeSet->addField(new DateField('date', DateField::TYPE_DATE, null, new \DateTime()));
         $changeSet->addField(new StringField('string', null, 'STRING'));
         $changeSet->addField(new IntegerField('integer', null, 1));
@@ -103,6 +104,7 @@ class AbstractCommonFieldVisitorTest extends TestCase
             ->with(
                 $this->equalTo($fieldName),
                 $this->anything(),
+                $this->anything(),
                 $this->callback(function ($newValue) use ($fieldType) {
                     switch ($fieldType) {
                         case 'date':
@@ -125,7 +127,7 @@ class AbstractCommonFieldVisitorTest extends TestCase
                 })
             );
 
-        $changeSet = new ChangeSet(EntityA::class, []);
+        $changeSet = new ChangeSet(EntityA::class, null);
         $changeSet->addField(new DateField($fieldName, $fieldType, null, $date));
 
         $changeSet->applyVisitor($visitor);
@@ -151,6 +153,7 @@ class AbstractCommonFieldVisitorTest extends TestCase
             ->with(
                 $this->anything(),
                 $this->anything(),
+                $this->anything(),
                 $this->callback(function ($newValue) use ($fieldValue) {
                     switch ($fieldValue) {
                         case true:
@@ -169,7 +172,7 @@ class AbstractCommonFieldVisitorTest extends TestCase
                 })
             );
 
-        $changeSet = new ChangeSet(EntityA::class, []);
+        $changeSet = new ChangeSet(EntityA::class, null);
         $changeSet->addField(new BooleanField('boolean', null, $fieldValue));
 
         $changeSet->applyVisitor($visitor);
@@ -186,6 +189,7 @@ class AbstractCommonFieldVisitorTest extends TestCase
             ->expects($this->exactly(1))
             ->method('processField')
             ->with(
+                $this->anything(),
                 $this->anything(),
                 $this->anything(),
                 $this->callback(function ($newValue) use ($fieldValue) {
@@ -206,7 +210,7 @@ class AbstractCommonFieldVisitorTest extends TestCase
                 })
             );
 
-        $changeSet = new ChangeSet(EntityA::class, []);
+        $changeSet = new ChangeSet(EntityA::class, null);
         $changeSet->addField(new BooleanField('boolean', null, $fieldValue));
 
         $changeSet->applyVisitor($visitor);

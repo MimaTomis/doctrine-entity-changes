@@ -3,6 +3,7 @@
 namespace Doctrine\ORM\ChangeSet\Field;
 
 use Doctrine\ORM\ChangeSet\AbstractField;
+use Doctrine\ORM\ChangeSet\EntityIdentifier;
 use Doctrine\ORM\ChangeSet\FieldVisitorInterface;
 
 /**
@@ -17,28 +18,28 @@ class EntityField extends AbstractField
     private $entityClass;
 
     /**
-     * @var array|null
+     * @var EntityIdentifier|null
      */
-    private $oldIdentifiers;
+    private $oldIdentifier;
 
     /**
-     * @var array|null
+     * @var EntityIdentifier|null
      */
-    private $newIdentifiers;
+    private $newIdentifier;
 
     /**
      * EntityField constructor.
      * @param string $name
      * @param string $entityClass
-     * @param array|null $oldIdentifiers
-     * @param array|null $newIdentifiers
+     * @param EntityIdentifier|null $oldIdentifier
+     * @param EntityIdentifier|null $newIdentifier
      */
-    public function __construct(string $name, string $entityClass, ?array $oldIdentifiers, ?array $newIdentifiers)
+    public function __construct(string $name, string $entityClass, ?EntityIdentifier $oldIdentifier, ?EntityIdentifier $newIdentifier)
     {
         parent::__construct($name);
         $this->entityClass = $entityClass;
-        $this->oldIdentifiers = $oldIdentifiers;
-        $this->newIdentifiers = $newIdentifiers;
+        $this->oldIdentifier = $oldIdentifier;
+        $this->newIdentifier = $newIdentifier;
     }
 
     /**
@@ -50,37 +51,19 @@ class EntityField extends AbstractField
     }
 
     /**
-     * @return array|null
+     * @return EntityIdentifier|null
      */
-    public function getOldIdentifiers(): ?array
+    public function getOldIdentifier(): ?EntityIdentifier
     {
-        return $this->oldIdentifiers;
+        return $this->oldIdentifier;
     }
 
     /**
-     * @param string $fieldName
-     * @return string|null
+     * @return EntityIdentifier|null
      */
-    public function getOldIdentifier(string $fieldName): ?string
+    public function getNewIdentifier(): ?EntityIdentifier
     {
-        return $this->oldIdentifiers[$fieldName] ?? null;
-    }
-
-    /**
-     * @return array|null
-     */
-    public function getNewIdentifiers(): ?array
-    {
-        return $this->newIdentifiers;
-    }
-
-    /**
-     * @param string $fieldName
-     * @return string|null
-     */
-    public function getNewIdentifier(string $fieldName): ?string
-    {
-        return $this->newIdentifiers[$fieldName] ?? null;
+        return $this->newIdentifier;
     }
 
     /**

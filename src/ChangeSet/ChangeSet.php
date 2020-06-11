@@ -36,9 +36,9 @@ class ChangeSet
     private $namespace;
 
     /**
-     * @var array
+     * @var EntityIdentifier|null
      */
-    private $identifiers;
+    private $identifier;
 
     /**
      * @var string
@@ -48,13 +48,13 @@ class ChangeSet
     /**
      * ChangeSet constructor.
      * @param string $className
-     * @param array $identifiers
+     * @param EntityIdentifier|null $identifier
      * @param string $namespace
      */
-    public function __construct(string $className, array $identifiers, string $namespace = '')
+    public function __construct(string $className, ?EntityIdentifier $identifier, string $namespace = '')
     {
         $this->namespace = $namespace;
-        $this->identifiers = $identifiers;
+        $this->identifier = $identifier;
         $this->className = $className;
     }
 
@@ -76,20 +76,11 @@ class ChangeSet
     }
 
     /**
-     * @return array
+     * @return EntityIdentifier|null
      */
-    public function getIdentifiers(): array
+    public function getIdentifier(): ?EntityIdentifier
     {
-        return $this->identifiers;
-    }
-
-    /**
-     * @param string $fieldName
-     * @return string|null
-     */
-    public function getIdentifierValue(string $fieldName): ?string
-    {
-        return $this->identifiers[$fieldName] ?? null;
+        return $this->identifier;
     }
 
     /**

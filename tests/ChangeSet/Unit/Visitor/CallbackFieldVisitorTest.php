@@ -7,6 +7,7 @@ use Doctrine\ORM\ChangeSet\ChangeSet;
 use Doctrine\ORM\ChangeSet\Field\BooleanField;
 use Doctrine\ORM\ChangeSet\Field\DateField;
 use Doctrine\ORM\ChangeSet\Field\EntityField;
+use Doctrine\ORM\ChangeSet\EntityIdentifier;
 use Doctrine\ORM\ChangeSet\Field\IntegerField;
 use Doctrine\ORM\ChangeSet\Field\StringField;
 use Doctrine\ORM\ChangeSet\Visitor\CallbackFieldVisitor;
@@ -27,7 +28,7 @@ class CallbackFieldVisitorTest extends TestCase
      */
     public function testVisitField(AbstractField $sourceField): void
     {
-        $changeSet = new ChangeSet(EntityA::class, []);
+        $changeSet = new ChangeSet(EntityA::class, null);
         $changeSet->addField($sourceField);
 
         $mock = $this->createPartialMock(\stdClass::class, ['__invoke']);
@@ -63,7 +64,7 @@ class CallbackFieldVisitorTest extends TestCase
             [new StringField('string', null, 'STRING')],
             [new IntegerField('integer', null, 1)],
             [new BooleanField('boolean', null, true)],
-            [new EntityField('entityD', EntityD::class, null, ['id' => 1])],
+            [new EntityField('entityD', EntityD::class, null, new EntityIdentifier(['id' => 1]))],
         ];
     }
 }

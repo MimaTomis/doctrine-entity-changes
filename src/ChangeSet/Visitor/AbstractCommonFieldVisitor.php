@@ -5,6 +5,7 @@ namespace Doctrine\ORM\ChangeSet\Visitor;
 use Doctrine\ORM\ChangeSet\Field\BooleanField;
 use Doctrine\ORM\ChangeSet\Field\DateField;
 use Doctrine\ORM\ChangeSet\Field\EntityField;
+use Doctrine\ORM\ChangeSet\EntityIdentifier;
 use Doctrine\ORM\ChangeSet\Field\FloatField;
 use Doctrine\ORM\ChangeSet\Field\IntegerField;
 use Doctrine\ORM\ChangeSet\Field\StringField;
@@ -58,7 +59,8 @@ abstract class AbstractCommonFieldVisitor implements FieldVisitorInterface
     {
         if ($this->isAcceptedField($field->getName(true))) {
             $this->processField(
-                $field->getName(true),
+                $field->getName(),
+                $field->getNamespace(),
                 $this->formatDate($field->getOldValue(), $field->getType()),
                 $this->formatDate($field->getNewValue(), $field->getType())
             );
@@ -75,7 +77,8 @@ abstract class AbstractCommonFieldVisitor implements FieldVisitorInterface
             $newValue = $field->getNewValue();
 
             $this->processField(
-                $field->getName(true),
+                $field->getName(),
+                $field->getNamespace(),
                 $oldValue !== null ? (string) $oldValue : null,
                 $newValue !== null ? (string) $newValue : null
             );
@@ -89,7 +92,8 @@ abstract class AbstractCommonFieldVisitor implements FieldVisitorInterface
     {
         if ($this->isAcceptedField($field->getName(true))) {
             $this->processField(
-                $field->getName(true),
+                $field->getName(),
+                $field->getNamespace(),
                 $field->getOldValue(),
                 $field->getNewValue()
             );
@@ -103,7 +107,8 @@ abstract class AbstractCommonFieldVisitor implements FieldVisitorInterface
     {
         if ($this->isAcceptedField($field->getName(true))) {
             $this->processField(
-                $field->getName(true),
+                $field->getName(),
+                $field->getNamespace(),
                 $this->formatBoolean($field->getOldValue()),
                 $this->formatBoolean($field->getNewValue())
             );
@@ -120,7 +125,8 @@ abstract class AbstractCommonFieldVisitor implements FieldVisitorInterface
             $newValue = $field->getNewValue();
 
             $this->processField(
-                $field->getName(true),
+                $field->getName(),
+                $field->getNamespace(),
                 $oldValue !== null ? number_format($oldValue, 2) : null,
                 $newValue !== null ? number_format($newValue, 2) : null
             );
@@ -132,15 +138,36 @@ abstract class AbstractCommonFieldVisitor implements FieldVisitorInterface
      */
     public function visitEntityField(EntityField $field): void
     {
-        // must be ignored or implemented in child class
+        if ($this->isAcceptedField($field->getName(true))) {
+            $oldIdentifier = $field->getOldIdentifier();
+            $newIdentifier = $field->getNewIdentifier();
+
+            $oldValue = $oldIdentifier ? $this->getEntityFieldValue($field->getEntityClass(), $oldIdentifier) : null;
+            $newValue = $newIdentifier ? $this->getEntityFieldValue($field->getEntityClass(), $newIdentifier) : null;
+
+            $this->processField(
+                $field->getName(),
+                $field->getNamespace(),
+                $oldValue !== null ? $oldValue : null,
+                $newValue !== null ? $newValue : null
+            );
+        }
     }
 
     /**
-     * @param string $field
+     * @param string $entityClass
+     * @param EntityIdentifier $identifier
+     * @return string|null
+     */
+    abstract protected function getEntityFieldValue(string $entityClass, EntityIdentifier $identifier): ?string;
+
+    /**
+     * @param string $fieldName
+     * @param string $namespace
      * @param string|null $oldValue
      * @param string|null $newValue
      */
-    abstract protected function processField(string $field, ?string $oldValue, ?string $newValue): void;
+    abstract protected function processField(string $fieldName, string $namespace, ?string $oldValue, ?string $newValue): void;
 
     /**
      * @param \DateTime|null $date
