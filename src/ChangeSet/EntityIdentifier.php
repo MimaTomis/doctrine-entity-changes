@@ -63,4 +63,12 @@ class EntityIdentifier
     {
         return $this->isSingleField() ? reset($this->identifiers) : null;
     }
+
+    /**
+     * @return array
+     */
+    public function toArray(): array
+    {
+        return $this->identifiers;
+    }
 }

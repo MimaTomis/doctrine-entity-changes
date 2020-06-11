@@ -42,8 +42,8 @@ abstract class AbstractCommonFieldVisitor implements FieldVisitorInterface
      * @param array $acceptedFields
      */
     public function __construct(
-        array $dateFormats,
-        array $booleanFormats,
+        array $dateFormats = [],
+        array $booleanFormats = [],
         array $acceptedFields = []
     )
     {

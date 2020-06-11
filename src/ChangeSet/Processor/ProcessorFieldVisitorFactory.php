@@ -30,8 +30,8 @@ class ProcessorFieldVisitorFactory implements ProcessorFieldVisitorFactoryInterf
      * @param array $acceptedFieldByEntityClasses
      */
     public function __construct(
-        array $dateFormats,
-        array $booleanFormats,
+        array $dateFormats = [],
+        array $booleanFormats = [],
         array $acceptedFieldByEntityClasses = []
     )
     {

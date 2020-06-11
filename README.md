@@ -6,6 +6,7 @@ Library makes it easy to get changes of Doctrine entities.
 
 * [Installation](#installation)
 * [How to use](#how-to-use)
+    * [Simple way to get changes](#simple-way-to-get-changes)
     * [Collect changes](#collect-changes)
     * [Field iteration](#field-iteration)
         * [Abstract visitors](#abstract-visitors)
@@ -37,9 +38,6 @@ Add dependency to your composer.json:
 ## How to use
 
 *Note that getting changes must be earlier then flush.*
-
-### Collect changes
-
 For example, declare entity class:
 
 ```php
@@ -94,6 +92,110 @@ class Example
     }
 }
 ```
+
+### Simple way to get changes
+
+```php
+<?php
+/**
+ * @var Example $entity - instance of entity class retrieved from DB
+ * @var \Doctrine\ORM\EntityManager $entityManager - мэнэджер сущностей Doctrine
+ */
+
+$processor = new \Doctrine\ORM\ChangeSet\Processor\ChangeSetProcessor(
+    new \Doctrine\ORM\ChangeSet\ChangeSetCollector($entityManager),
+    new \Doctrine\ORM\ChangeSet\Processor\ProcessorFieldVisitorFactory()
+);
+
+$fields = $processor->getChanges($entity);
+ 
+foreach ($fields as $field) {
+    // $field instanceof StringField
+    $name = $field->getName(); // name of field relative to entity
+    $fullName = $field->getName(true); // name of field relative to relation
+    $oldValue = $field->getOldValue(); // null or string
+    $newValue = $field->getNewValue(); // null or string
+}
+```
+
+If field is part of association, then `$fullName` equals to <associationFieldName>.<fieldName>. If field is part or root object, then `$fullName` equals to `$name`. Old and New value converted from DateTime, Boolean, Integer and another fields by rules described above.
+
+#### Convert dates to string
+
+By default used this formats:
+* date -> Y-m-d
+* time -> H:i:s
+* datetime -> Y-m-d H:i:s
+
+You cat declare custom formats in first argument of ProcessorFieldVisitorFactory:
+
+```php
+<?php
+$factory = new \Doctrine\ORM\ChangeSet\Processor\ProcessorFieldVisitorFactory(
+    [
+        \Doctrine\ORM\ChangeSet\Field\DateField::TYPE_DATE => 'm/d/Y',
+        \Doctrine\ORM\ChangeSet\Field\DateField::TYPE_DATETIME => 'm/d/Y H:i A',
+        \Doctrine\ORM\ChangeSet\Field\DateField::TYPE_TIME => 'H:i A',
+    ]
+);
+```
+
+#### Convert booleans to string
+
+By default boolean converts to this strings:
+* true -> 'Checked'
+* false|null -> 'Unchecked'
+
+You can declare custom rules in second argument of ProcessorFieldVisitorFactory:
+
+```php
+<?php
+$factory = new \Doctrine\ORM\ChangeSet\Processor\ProcessorFieldVisitorFactory(
+    [],
+    [
+        \Doctrine\ORM\ChangeSet\Visitor\AbstractCommonFieldVisitor::BOOLEAN_CHECKED => 'Yes',
+        \Doctrine\ORM\ChangeSet\Visitor\AbstractCommonFieldVisitor::BOOLEAN_UNCHECKED => 'No',
+    ]
+);
+```
+
+#### Convert floats to string
+
+Float always converted to string accurate to 2 digits after the dot.
+* 1 => '1.00'
+* 10.3748 => '10.37'
+* 2.3490 => '2.34'
+
+#### Convert entities to string
+
+Entity field values presents as serialized array:
+```php
+<?php
+/**
+ * @var string $oldValue - see above
+ */
+$value = unserialize($oldValue);
+$className = $value['class']; // name of entity class
+$identifier = $value['identifier']; // instanceof \Doctrine\ORM\ChangeSet\EntityIdentifier
+```
+
+You can use this fields for fetching entity.
+
+```php
+<?php
+/**
+ * @var \Doctrine\ORM\EntityManager $entityManager
+ * @var string $className
+ * @var \Doctrine\ORM\ChangeSet\EntityIdentifier $identifier 
+ */
+$entity = $entityManager->find($className, $identifier->toArray());
+
+// Or if you sure that identifier is single field
+
+$entity = $entityManager->find($className, $identifier->getSingleValue());
+```
+
+### Collect changes
 
 Collect changes for example entity:
 
