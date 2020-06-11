@@ -6,6 +6,15 @@ Library makes it easy to get changes of Doctrine entities.
 
 * [Installation](#installation)
 * [How to use](#how-to-use)
+    * [Collect changes](#collect-changes)
+    * [Field iteration](#field-iteration)
+        * [Abstract visitors](#abstract-visitors)
+        * [Visitor with callback](#visitor-with-callback)
+        * [Full implementation of visitor](#full-implementation-of-visitor)
+    * [Getting field name](#getting-field-name)
+    * [Getting relation changes](#getting-relation-changes)
+    * [Apply visitor to concrete field](#apply-visitor-to-concrete-field)
+* [How to help](#how-to-help)
 
 ## Installation
 
@@ -34,6 +43,7 @@ Add dependency to your composer.json:
 For example, declare entity class:
 
 ```php
+<?php
 use Doctrine\ORM\Mapping as ORM;
 
 /**
@@ -88,6 +98,7 @@ class Example
 Collect changes for example entity:
 
 ```php
+<?php
 /**
  * @var Example $entity - instance of entity class retrieved from DB
  * @var \Doctrine\ORM\EntityManager $entityManager - мэнэджер сущностей Doctrine
@@ -100,11 +111,13 @@ $entityManager->persist($entity);
 $entityManager->flush($entity);
 ```` 
 
-### Each field changes
+### Field iteration
 
+Field iteration is implemented using visitors.
 For example make ChangeLog entity
 
 ```php
+<?php
 //--------------
 // ChangeLog.php
 //--------------
@@ -224,9 +237,126 @@ class ChangeLog
 }
 ```
 
-Further you need it's implement FieldVisitorInterface (this is full implementation, below there are easier variants):
+To simplify you can extend you visitor of:
+
+1. *\Doctrine\ORM\ChangeSet\Visitor\AbstractEmptyFieldVisitor* - full clear field visitor (with empty methods)
+2. *\Doctrine\ORM\ChangeSet\Visitor\AbstractCommonFieldVisitor* - visitor with logic to "pre-formatting" fields, like in example above
+
+Otherwise you can implement *\Doctrine\ORM\ChangeSetFieldVisitorInterface*. For certain tasks you can use *\Doctrine\ORM\ChangeSet\Visitor\CallbackFieldVisitor*
+
+#### Abstract visitors
+
+Let's try to implement simple EntityFieldVisitor with AbstractCommonFieldVisitor:
 
 ```php
+<?php
+use Doctrine\ORM\ChangeSet\Field\DateField;
+use Doctrine\ORM\ChangeSet\Visitor\AbstractCommonFieldVisitor;
+
+class EntityFieldVisitor extends AbstractCommonFieldVisitor
+{
+    /**
+     * @var Example
+     */
+    private $relatedEntity;
+    
+    /**
+     * @var ChangeLog[]
+     */
+    private $logEntities = [];
+    
+    /**
+     * EntityFieldVisitor constructor.
+     * @param Example $relatedEntity
+    */
+    public function __construct(Example $relatedEntity) 
+    {
+        $this->relatedEntity = $relatedEntity;
+        parent::__construct(
+            [
+                DateField::TYPE_DATE => 'm/d/Y',
+                DateField::TYPE_DATETIME => 'm/d/Y H:m A',
+                DateField::TYPE_TIME => 'H:m A',
+            ],
+            [
+                AbstractCommonFieldVisitor::BOOLEAN_CHECKED => 'Checked',
+                AbstractCommonFieldVisitor::BOOLEAN_UNCHECKED => 'Unchecked',                
+            ],
+        );
+    }
+    
+    /**
+     * @param string $field
+     * @param string|null $oldValue
+     * @param string|null $newValue
+     */
+    protected function processField(string $field,?string $oldValue,?string $newValue) : void
+    {
+         $this->logEntities[] = new ChangeLog(
+            $this->relatedEntity,
+            $field,
+            $oldValue,
+            $newValue
+        );
+    }
+}
+```
+
+You can add list of accepted fields in third argument of parent class constructor. By default accepted all fields.
+Example of saving received logs:
+
+```php
+<?php
+/**
+ * @var \Doctrine\ORM\ChangeSet\ChangeSet $changeSet
+ * @var Example $entity
+ * @var \Doctrine\ORM\EntityManager $em
+ */
+$visitor = new EntityFieldVisitor($entity);
+$changeSet->applyVisitor($visitor);
+
+$changeLogEntities = $visitor->getChangeLogEntities();
+
+if (!empty($changeLogEntities)) {
+    foreach ($changeLogEntities as $changeLogEntity) {
+        $em->persist($changeLogEntity);
+    }
+    
+    $em->flush($changeLogEntities);
+}
+```
+
+#### Visitor with callback
+
+Callback visitor allows you to walk through field changes with a specific type.
+
+```php
+<?php
+/**
+ * @var \Doctrine\ORM\ChangeSet\ChangeSet $changeSet 
+ */
+
+use Doctrine\ORM\ChangeSet\Field\StringField;
+use Doctrine\ORM\ChangeSet\Visitor\CallbackFieldVisitor;
+
+$changeSet->applyVisitor(
+    new CallbackFieldVisitor(
+        StringField::class,
+        function (StringField $field) {
+            if ($field->getNewValue() === 'ALARM') {
+                // do anything...
+            }
+        }
+    )
+);
+```
+
+#### Full implementation of visitor
+
+Further you need it's implement FieldVisitorInterface:
+
+```php
+<?php
 //-----------------------
 // EntityFieldVisitor.php
 //-----------------------
@@ -414,118 +544,89 @@ class EntityFieldVisitor implements FieldVisitorInterface
 }
 ```
 
-```php
-/**
- * @var \Doctrine\ORM\ChangeSet\ChangeSet $changeSet
- * @var Example $entity
- * @var \Doctrine\ORM\EntityManager $em
- */
-$visitor = new EntityFieldVisitor($entity);
-$changeSet->applyVisitor($visitor);
+### Getting field name
 
-$changeLogEntities = $visitor->getChangeLogEntities();
-
-if (!empty($changeLogEntities)) {
-    foreach ($changeLogEntities as $changeLogEntity) {
-        $em->persist($changeLogEntity);
-    }
-    
-    $em->flush($changeLogEntities);
-}
-```
-
-### Visitors
-
-#### Abstract visitors
-
-To simplify you can extend you visitor of:
-1. *\Doctrine\ORM\ChangeSet\Visitor\AbstractEmptyFieldVisitor* - full clear field visitor (with empty methods)
-2. *\Doctrine\ORM\ChangeSet\Visitor\AbstractCommonFieldVisitor* - visitor with logic to "pre-formatting" fields, like in example above
-
-Let's try to simplify EntityFieldVisitor with AbstractCommonFieldVisitor:
+For getting field name relative to the class where the field is declared all of you need:
 
 ```php
-use Doctrine\ORM\ChangeSet\Field\DateField;
-use Doctrine\ORM\ChangeSet\Visitor\AbstractCommonFieldVisitor;
-
-class EntityFieldVisitor extends AbstractCommonFieldVisitor
-{
-    /**
-     * @var Example
-     */
-    private $relatedEntity;
-    
-    /**
-     * @var ChangeLog[]
-     */
-    private $logEntities = [];
-    
-    /**
-     * EntityFieldVisitor constructor.
-     * @param Example $relatedEntity
-    */
-    public function __construct(Example $relatedEntity) 
-    {
-        $this->relatedEntity = $relatedEntity;
-        parent::__construct(
-            [
-                DateField::TYPE_DATE => 'm/d/Y',
-                DateField::TYPE_DATETIME => 'm/d/Y H:m A',
-                DateField::TYPE_TIME => 'H:m A',
-            ],
-            [
-                AbstractCommonFieldVisitor::BOOLEAN_CHECKED => 'Checked',
-                AbstractCommonFieldVisitor::BOOLEAN_UNCHECKED => 'Unchecked',                
-            ],
-        );
-    }
-    
-    /**
-     * @param string $field
-     * @param string|null $oldValue
-     * @param string|null $newValue
-     */
-    protected function processField(string $field,?string $oldValue,?string $newValue) : void
-    {
-         $this->logEntities[] = new ChangeLog(
-            $this->relatedEntity,
-            $field,
-            $oldValue,
-            $newValue
-        );
-    }
-}
-```
-You can add list of accepted fields in third argument of parent class constructor. By default accepted all fields. List must include full path to field:
-
-```php
+<?php
 /**
  * @var \Doctrine\ORM\ChangeSet\AbstractField $field 
  */
-$fieldName = $field->getName(); // return $title
-$fieldNameIncludeNamespace = $field->getName(true); // return $title for parent entity and parentEntityField.$title for sub entities
+$fieldName = $field->getName();
 ```
 
-#### CallbackVisitor
-
-Callback visitor allows you to walk through field changes with a specific type.
+This code return convrete field name: *title*, *createdAt*, etc.
+For getting full path of field, relative to root class in a chain to relations, need to do the following:
 
 ```php
+<?php
 /**
- * @var \Doctrine\ORM\ChangeSet\ChangeSet $changeSet 
+ * @var \Doctrine\ORM\ChangeSet\AbstractField $field 
  */
-
-use Doctrine\ORM\ChangeSet\Field\StringField;
-use Doctrine\ORM\ChangeSet\Visitor\CallbackFieldVisitor;
-
-$changeSet->applyVisitor(
-    new CallbackFieldVisitor(
-        StringField::class,
-        function (StringField $field) {
-            if ($field->getNewValue() === 'ALARM') {
-                // do anything...
-            }
-        }
-    )
-);
+$fieldName = $field->getName(true);
 ```
+
+This code return field name like: *relation.subRelation.title*
+
+### Getting relation changes
+
+The visitor enters only fields. You can getting relations changes through call:
+
+```php
+<?php
+/**
+ * @var \Doctrine\ORM\ChangeSet\ChangeSet $changeSet
+ * @var \Doctrine\ORM\ChangeSet\FieldVisitorInterface $visitor
+ */
+$relatedChanges = $changeSet->getRelatedChangeSets();
+
+foreach ($relatedChanges as $relatedChangeSet) {
+    $relatedChangeSet->applyVisitor($visitor);
+}
+```
+
+As another way you can apply visitor to concrete related change set:
+
+```php
+<?php
+/**
+ * @var \Doctrine\ORM\ChangeSet\ChangeSet $changeSet
+ * @var \Doctrine\ORM\ChangeSet\FieldVisitorInterface $visitor
+ */
+$relatedChanges = $changeSet->applyVisitor($visitor, 'relatedFieldName');
+```
+
+In this case *relatedFieldName* is name of field for which the association is declared.
+You can get access to any relation level: *relatedFieldName.subRelatedField*
+
+### Apply visitor to concrete field
+
+You can apply visitor to conreate field:
+
+```php
+<?php
+/**
+ * @var \Doctrine\ORM\ChangeSet\ChangeSet $changeSet
+ * @var \Doctrine\ORM\ChangeSet\FieldVisitorInterface $visitor
+ */
+$relatedChanges = $changeSet->applyVisitor($visitor, 'fieldName');
+```
+
+In this case *fieldName* is name of target field. You can get access to field in related changes:
+
+```php
+<?php
+
+/**
+ * @var \Doctrine\ORM\ChangeSet\ChangeSet $changeSet
+ * @var \Doctrine\ORM\ChangeSet\FieldVisitorInterface $visitor
+ */
+$relatedChanges = $changeSet->applyVisitor($visitor, 'relation.fieldName');
+```
+
+# How to help
+
+1. Improve README 
+2. Fix text in README (My English is poor)
+3. Improve library: any suggestions, corrections are accepted
